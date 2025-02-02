@@ -1,3 +1,4 @@
+
 provider "azurerm" {
   features {}
   subscription_id = var.subscription_id
@@ -8,53 +9,22 @@ variable "subscription_id" {
   type        = string
 }
 
-variable "resource_group_name" {
-  description = "The name of the resource group"
-  default     = "openai-rg"
-}
-
-variable "location" {
-  description = "The Azure region to deploy resources"
-  default     = "East US"
-}
-
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "openai-rg"
-    storage_account_name = "openaistorageacct"
-    container_name       = "tfstate"
-    key                  = "terraform.tfstate"
-  }
-
-  required_version = ">= 1.0"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = ">= 3.0"
-    }
-  }
-}
-
 resource "azurerm_resource_group" "openai_rg" {
-  name     = var.resource_group_name
-  location = var.location
+  name     = "openai-rg"
+  location = "East US"
 }
 
-resource "azurerm_storage_account" "tfstate" {
-  name                     = "openaistorageacct"
+resource "azurerm_storage_account" "tf_backend" {
+  name                     = "tfbackend${random_id.unique.hex}"
   resource_group_name      = azurerm_resource_group.openai_rg.name
   location                 = azurerm_resource_group.openai_rg.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
 
-resource "azurerm_storage_container" "tfstate" {
+resource "azurerm_storage_container" "tf_state" {
   name                  = "tfstate"
-  storage_account_name  = azurerm_storage_account.tfstate.name
+  storage_account_name  = azurerm_storage_account.tf_backend.name
   container_access_type = "private"
 }
 
