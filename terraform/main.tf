@@ -1,4 +1,3 @@
-
 provider "azurerm" {
   features {}
 }
@@ -8,6 +7,10 @@ resource "azurerm_resource_group" "openai_rg" {
   location = "East US"
 }
 
+resource "random_id" "unique" {
+  byte_length = 4
+}
+
 resource "azurerm_cognitive_account" "openai_account" {
   name                = "openaiaccount${random_id.unique.hex}"
   location            = azurerm_resource_group.openai_rg.location
@@ -15,13 +18,11 @@ resource "azurerm_cognitive_account" "openai_account" {
   kind                = "OpenAI"
   sku_name            = "S0"
 
+  custom_subdomain_name = "openaiaccount${random_id.unique.hex}"
+
   network_acls {
     default_action = "Allow"
   }
-}
-
-resource "random_id" "unique" {
-  byte_length = 4
 }
 
 output "openai_endpoint" {
@@ -29,6 +30,6 @@ output "openai_endpoint" {
 }
 
 output "openai_key" {
-  value = azurerm_cognitive_account.openai_account.primary_access_key
+  value     = azurerm_cognitive_account.openai_account.primary_access_key
   sensitive = true
 }
