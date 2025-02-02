@@ -1,5 +1,15 @@
 
-variable "location" {
-  description = "The Azure region to deploy resources"
-  default     = "East US"
+variable "subscription_id" {
+  description = "The Azure subscription ID"
+  type        = string
+}
+
+variable "client_id" {
+  description = "The Azure client ID"
+  type        = string
+}
+
+variable "tenant_id" {
+  description = "The Azure tenant ID"
+  type        = string
 }

@@ -2,10 +2,22 @@
 provider "azurerm" {
   features {}
   subscription_id = var.subscription_id
+  client_id       = var.client_id
+  tenant_id       = var.tenant_id
 }
 
 variable "subscription_id" {
   description = "The Azure subscription ID"
+  type        = string
+}
+
+variable "client_id" {
+  description = "The Azure client ID"
+  type        = string
+}
+
+variable "tenant_id" {
+  description = "The Azure tenant ID"
   type        = string
 }
 
@@ -15,7 +27,7 @@ resource "azurerm_resource_group" "openai_rg" {
 }
 
 resource "azurerm_storage_account" "tf_backend" {
-  name                     = "tfbackend${random_id.unique.hex}"
+  name                     = "tfbackendstatic"
   resource_group_name      = azurerm_resource_group.openai_rg.name
   location                 = azurerm_resource_group.openai_rg.location
   account_tier             = "Standard"
