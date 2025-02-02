@@ -12,7 +12,9 @@ on:
           - plan
           - apply
           - destroy
-
+permissions:
+      id-token: write
+      contents: read
 jobs:
   terraform:
     runs-on: ubuntu-latest
