@@ -1,9 +1,7 @@
 name: Deploy to Azure Container Apps
 
 on:
-  push:
-    branches:
-      - development
+  workflow_dispatch:
 
 permissions:
       id-token: write
@@ -23,13 +21,3 @@ jobs:
          client-id: ${{ secrets.AZURE_CLIENT_ID }}
          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Build and deploy Container App
-        uses: azure/container-apps-deploy-action@v1
-        with:
-          appSourcePath: ${{ github.workspace }}
-          acrName: nutritionappbackendservice
-          containerAppName: nutrition-app-backend-service
-          resourceGroup: nutrition_app_dev
-          buildArguments: |
-            "arg-1=value-1" "arg-2=value-2"
