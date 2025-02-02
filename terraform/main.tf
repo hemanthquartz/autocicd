@@ -1,5 +1,11 @@
 provider "azurerm" {
   features {}
+  subscription_id = var.subscription_id
+}
+
+variable "subscription_id" {
+  description = "The Azure subscription ID"
+  type        = string
 }
 
 resource "azurerm_resource_group" "openai_rg" {
