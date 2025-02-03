@@ -45,44 +45,6 @@ jobs:
         run: terraform init
         working-directory: terraform
 
-# Updated GitHub Actions workflow with variables passed explicitly and interactive input disabled
-azure_openai_yml_content = """
-name: Azure OpenAI Deployment
-
-on:
-  workflow_dispatch:
-    inputs:
-      action:
-        description: 'Action to perform'
-        required: true
-        default: 'apply'
-        type: choice
-        options:
-          - plan
-          - apply
-          - destroy
-
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    env:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      TF_LOG: DEBUG
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: '1.4.0'
-
-      - name: Initialize Terraform
-        run: terraform init -input=false
-        working-directory: terraform
-
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
         run: |
