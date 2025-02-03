@@ -7,13 +7,13 @@ provider "azurerm" {
 }
 
 resource "azurerm_cognitive_account" "openai_account" {
-  name                = "openaiaccount"
+  name                = "openaiaccount${random_id.unique.hex}"
   location            = "East US"
   resource_group_name = "openai_rg"
   kind                = "OpenAI"
   sku_name            = "S0"
 
-  custom_subdomain_name = "openai"
+  custom_subdomain_name = "openaiaccount${random_id.unique.hex}"
 
   network_acls {
     default_action = "Allow"
