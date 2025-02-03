@@ -45,17 +45,67 @@ jobs:
         run: terraform init
         working-directory: terraform
 
+# Updated GitHub Actions workflow with variables passed explicitly and interactive input disabled
+azure_openai_yml_content = """
+name: Azure OpenAI Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      TF_LOG: DEBUG
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.4.0'
+
+      - name: Initialize Terraform
+        run: terraform init -input=false
+        working-directory: terraform
+
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
-        run: timeout 600 terraform plan -out=tfplan -lock=false
+        run: |
+          terraform plan -out=tfplan -lock=false -input=false \
+          -var "subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          -var "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+          -var "tenant_id=${{ secrets.AZURE_TENANT_ID }}"
         working-directory: terraform
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
-        run: terraform apply -auto-approve
+        run: |
+          terraform apply -auto-approve -input=false \
+          -var "subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          -var "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+          -var "tenant_id=${{ secrets.AZURE_TENANT_ID }}"
         working-directory: terraform
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
-        run: terraform destroy -auto-approve
+        run: |
+          terraform destroy -auto-approve -input=false \
+          -var "subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          -var "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+          -var "tenant_id=${{ secrets.AZURE_TENANT_ID }}"
         working-directory: terraform
