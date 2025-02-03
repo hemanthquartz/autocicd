@@ -45,10 +45,10 @@ jobs:
         run: terraform init
         working-directory: terraform
 
-      - name: Force Unlock Terraform State (if locked)
-        continue-on-error: true
-        run: terraform force-unlock -force 3a81d085-f6e7-ec73-972c-bce2e7ae77f0
-        working-directory: terraform
+      # - name: Force Unlock Terraform State (if locked)
+      #   continue-on-error: true
+      #   run: terraform force-unlock -force 3a81d085-f6e7-ec73-972c-bce2e7ae77f0
+      #   working-directory: terraform
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
