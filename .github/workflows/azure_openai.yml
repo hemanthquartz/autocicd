@@ -20,9 +20,11 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     env:
+    env:
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_USE_OIDC: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -38,7 +40,7 @@ jobs:
          client-id: ${{ secrets.AZURE_CLIENT_ID }}
          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-         
+
       - name: Initialize Terraform
         run: terraform init
         working-directory: terraform
