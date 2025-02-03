@@ -24,6 +24,7 @@ jobs:
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       ARM_USE_OIDC: true
+      TF_LOG: DEBUG
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -46,7 +47,7 @@ jobs:
 
       - name: Terraform Plan
         if: github.event.inputs.action == 'plan'
-        run: terraform plan -out=tfplan
+        run: timeout 600 terraform plan -out=tfplan -lock=false
         working-directory: terraform
 
       - name: Terraform Apply
