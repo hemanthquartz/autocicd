@@ -36,7 +36,7 @@ resource "azurerm_cognitive_deployment" "gpt4_deployment" {
 
   sku { # ✅ Corrected SKU block
     name     = "Standard"
-    capacity = 10
+    capacity = 8
   }
 }
 
