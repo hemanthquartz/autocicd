@@ -11,7 +11,7 @@ resource "random_id" "unique" {
 
 resource "azurerm_cognitive_account" "openai_account" {
   name                = "openaiaccount${random_id.unique.hex}"
-  location            = azurerm_resource_group.openai_rg.location
+  location            = "East US"
   resource_group_name = "openai_rg"
   kind                = "OpenAI"
   sku_name            = "S0" # This is correct for Cognitive Account
