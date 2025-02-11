@@ -14,7 +14,7 @@ resource "azurerm_cognitive_account" "openai_account" {
   location            = "East US"
   resource_group_name = "openai_rg"
   kind                = "OpenAI"
-  sku_name            = "S0" # This is correct for Cognitive Account
+  sku_name            = "S0" # ✅ Correct for Cognitive Account
 
   custom_subdomain_name = "openaiaccount${random_id.unique.hex}"
 
@@ -23,18 +23,19 @@ resource "azurerm_cognitive_account" "openai_account" {
   }
 }
 
-
 resource "azurerm_cognitive_deployment" "gpt4_deployment" {
   name                 = "gpt4o"
   cognitive_account_id = azurerm_cognitive_account.openai_account.id
   rai_policy_name      = "Microsoft.Default"
+
   model {
     format  = "OpenAI"
     name    = "gpt-4o"
     version = "2024-05-13"
   }
-  scale {
-    type     = "Standard"
+
+  sku { # ✅ Corrected SKU block
+    name     = "Standard"
     capacity = 10
   }
 }
