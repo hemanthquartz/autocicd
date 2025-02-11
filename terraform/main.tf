@@ -23,18 +23,18 @@ resource "azurerm_cognitive_account" "openai_account" {
   }
 }
 
+
 resource "azurerm_cognitive_deployment" "gpt4_deployment" {
-  name                 = "gpt4-deployment"
+  name                 = "gpt4o"
   cognitive_account_id = azurerm_cognitive_account.openai_account.id
-
+  rai_policy_name      = "Microsoft.Default"
   model {
-    name    = "gpt-4"
-    version = "1106-preview"
     format  = "OpenAI"
+    name    = "gpt-4o"
+    version = "2024-05-13"
   }
-
-  sku {
-    name     = "Standard" # ✅ Corrected SKU name
+  scale {
+    type     = "Standard"
     capacity = 10
   }
 }
