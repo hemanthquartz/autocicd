@@ -31,13 +31,16 @@ resource "azurerm_cognitive_account" "openai_account" {
 resource "azurerm_cognitive_deployment" "gpt4_deployment" {
   name                 = "gpt4-deployment"
   cognitive_account_id = azurerm_cognitive_account.openai_account.id
+
   model {
-    name     = "gpt-4"
-    version  = "1106-preview"
-    format   = "OpenAI"
+    name    = "gpt-4"
+    version = "1106-preview"
+    format  = "OpenAI"
   }
-  scale {
-    type = "Standard"
+
+  sku {
+    name     = "S0"
+    capacity = 10
   }
 }
 
