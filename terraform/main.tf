@@ -19,7 +19,7 @@ resource "azurerm_cognitive_account" "openai_account" {
   location            = azurerm_resource_group.openai_rg.location
   resource_group_name = azurerm_resource_group.openai_rg.name
   kind                = "OpenAI"
-  sku_name            = "S0"
+  sku_name            = "S0" # This is correct for Cognitive Account
 
   custom_subdomain_name = "openaiaccount${random_id.unique.hex}"
 
@@ -39,7 +39,7 @@ resource "azurerm_cognitive_deployment" "gpt4_deployment" {
   }
 
   sku {
-    name     = "S0"
+    name     = "Standard" # ✅ Corrected SKU name
     capacity = 10
   }
 }
