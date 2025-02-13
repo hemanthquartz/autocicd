@@ -4,31 +4,40 @@ on:
   workflow_dispatch:
 
 permissions:
-      id-token: write
-      contents: read
+  id-token: write
+  contents: read
 
 jobs:
-  deploy:
+  aicicd:
+    name: aicicd-poc
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Login to Azure
         uses: azure/login@v1
         with:
-         client-id: ${{ secrets.AZURE_CLIENT_ID }}
-         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Capture Logs from GitHub Actions Runner
+  capture_logs:
+    name: Capture Logs
+    needs: aicicd
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create log file
         run: |
           mkdir -p logs
-          journalctl -u actions.runner* --no-pager > logs/aicicd_runner_logs.txt 2>&1 || echo "Could not capture logs"
+          echo "Fetching logs from aicicd job..." > logs/aicicd_output.log
+          echo "======== Workflow Output ========" >> logs/aicicd_output.log
+          echo "Job status: ${{ needs.aicicd.result }}" >> logs/aicicd_output.log
+          echo "======== System Logs ========" >> logs/aicicd_output.log
+          journalctl --no-pager --since "5 minutes ago" | grep -i terraform >> logs/aicicd_output.log || echo "No relevant logs found" >> logs/aicicd_output.log
 
       - name: Upload Logs
         uses: actions/upload-artifact@v4
         with:
-          name: aicicd-runner-logs
-          path: logs/aicicd_runner_logs.txt
+          name: aicicd-logs
+          path: logs/aicicd_output.log
