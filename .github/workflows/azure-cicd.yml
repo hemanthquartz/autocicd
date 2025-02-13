@@ -25,4 +25,4 @@ jobs:
       - name: Capture Workflow Failure Logs
         run: |
           echo "🚨 aicicd job failed. Capturing logs..."
-          cat $GITHUB_WORKSPACE/_logs || echo "No additional logs found."
+          ls -R $GITHUB_WORKSPACE
