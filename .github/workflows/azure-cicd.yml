@@ -22,7 +22,13 @@ jobs:
          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Capture Workflow Failure Logs
+      - name: Capture Logs from GitHub Actions Runner
         run: |
-          echo "🚨 aicicd job failed. Capturing logs..."
-          ls -R $GITHUB_WORKSPACE
+          mkdir -p logs
+          journalctl -u actions.runner* --no-pager > logs/aicicd_runner_logs.txt 2>&1 || echo "Could not capture logs"
+
+      - name: Upload Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: aicicd-runner-logs
+          path: logs/aicicd_runner_logs.txt
