@@ -78,7 +78,13 @@ jobs:
           -var "tenant_id=${{ secrets.AZURE_TENANT_ID }}"
         working-directory: terraform
 
-      - name: Capture Output
+      - name: Save Terraform Output
         run: |
-          echo "Terraform Output:" > output.log
-          cat $GITHUB_WORKSPACE | tee -a output.log
+          echo "Terraform Output:" > $GITHUB_WORKSPACE/terraform_output.log
+          cat terraform/terraform_output.log >> $GITHUB_WORKSPACE/terraform_output.log
+
+      - name: Upload Terraform Output Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-output
+          path: $GITHUB_WORKSPACE/terraform_output.log
