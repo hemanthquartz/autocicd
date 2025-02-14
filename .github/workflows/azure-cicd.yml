@@ -27,13 +27,28 @@ jobs:
     needs: [aicicd]
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch AICICD Logs
+      - name: Fetch and Save Job Logs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p logs
-          gh run view ${{ github.run_id }} --log > logs/aicicd_error_log.txt || echo "Error log capture failed."
+          echo "Fetching logs for aicicd job..."
 
-      - name: Print Logs Before Uploading
-        run: |
-          echo "========== START OF AICICD ERROR LOG =========="
-          cat logs/aicicd_error_log.txt || echo "Error log is empty."
-          echo "=========== END OF AICICD ERROR LOG ==========="
+          # Get the workflow run ID
+          RUN_ID=$(curl -s -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs?event=push&status=completed" \
+            | jq -r '.workflow_runs[0].id')
+
+          echo "Workflow Run ID: $RUN_ID" > logs/aicicd_runtime.log
+
+          # Download logs using GitHub API
+          curl -s -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -o logs/aicicd_logs.zip \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/logs"
+
+      - name: Upload Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: aicicd-runtime-logs
+          path: logs/
