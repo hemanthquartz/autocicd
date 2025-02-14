@@ -84,7 +84,7 @@ jobs:
           cat terraform/terraform_output.log >> $GITHUB_WORKSPACE/terraform_output.log
 
       - name: Upload Terraform Output Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: terraform-output
           path: $GITHUB_WORKSPACE/terraform_output.log
