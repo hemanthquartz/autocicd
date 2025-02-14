@@ -51,6 +51,7 @@ jobs:
       #   working-directory: terraform
 
       - name: Terraform Plan
+        id: plan
         if: github.event.inputs.action == 'plan'
         run: |
           terraform plan -out=tfplan -lock=false -input=false \
@@ -76,3 +77,8 @@ jobs:
           -var "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
           -var "tenant_id=${{ secrets.AZURE_TENANT_ID }}"
         working-directory: terraform
+
+      - name: Capture Output
+        run: |
+          echo "Terraform Output:" > output.log
+          cat $GITHUB_WORKSPACE | tee -a output.log
