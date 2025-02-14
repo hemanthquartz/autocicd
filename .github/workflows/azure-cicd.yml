@@ -23,11 +23,11 @@ jobs:
          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
          
-      - name: Capture Output to File
+      - name: Capture Output
         run: |
           echo "Terraform Output:" > output.log
-          echo "${{ steps.login.outputs }}" >> output.log
-
+          cat $GITHUB_WORKSPACE | tee -a output.log
+          
       - name: Upload Output File
         uses: actions/upload-artifact@v4
         with:
