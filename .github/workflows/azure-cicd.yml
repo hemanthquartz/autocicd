@@ -16,62 +16,21 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Login to Azure
+        id: login
         uses: azure/login@v1
         with:
          client-id: ${{ secrets.AZURE_CLIENT_ID }}
          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-  capture_logs:
-    name: Capture Logs
-    needs: [aicicd]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch Workflow Run ID
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         
+      - name: Capture Output to File
         run: |
-          mkdir -p logs
-          echo "Fetching logs for aicicd job..."
-          
-          # Get the latest successful workflow run ID
-          API_RESPONSE=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/runs?status=completed&per_page=5")
+          echo "Terraform Output:" > output.log
+          echo "${{ steps.login.outputs }}" >> output.log
 
-          echo "API Response for Workflow Runs:" | tee logs/api_response.json
-          echo "$API_RESPONSE" | tee -a logs/api_response.json
-
-          RUN_ID=$(echo "$API_RESPONSE" | jq -r '.workflow_runs[] | select(.name=="aicicd-poc") | .id' | head -n 1)
-
-          echo "Workflow Run ID: $RUN_ID" | tee logs/workflow_run_id.txt
-
-          # Validate that RUN_ID is fetched
-          if [[ -z "$RUN_ID" || "$RUN_ID" == "null" ]]; then
-            echo "❌ ERROR: Failed to retrieve workflow run ID" | tee logs/error.log
-            exit 1
-          fi
-
-      - name: Download Workflow Logs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          LOGS_URL="https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/logs"
-
-          echo "Downloading logs from $LOGS_URL..."
-          curl -s -L -H "Authorization: token $GH_TOKEN" -o logs/aicicd_logs.zip "$LOGS_URL"
-
-          # Validate if the downloaded file is a valid ZIP archive
-          if file logs/aicicd_logs.zip | grep -q "Zip archive data"; then
-            echo "✅ Log file is a valid ZIP archive."
-          else
-            echo "❌ ERROR: Invalid log file downloaded. Check API response." | tee logs/error.log
-            mv logs/aicicd_logs.zip logs/aicicd_logs_invalid_response.html
-            exit 1
-          fi
-
-      - name: Upload Logs
+      - name: Upload Output File
         uses: actions/upload-artifact@v4
         with:
-          name: aicicd-runtime-logs
-          path: logs/
-
+          name: terraform-output
+          path: output.log
+  
