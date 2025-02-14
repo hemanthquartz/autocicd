@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
-  contents: read
+      id-token: write
+      contents: read
 
 jobs:
   aicicd:
@@ -13,29 +13,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+         client-id: ${{ secrets.AZURE_CLIENT_ID }}
+         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   capture_logs:
     name: Capture Logs
-    needs: aicicd
+    needs: [aicicd]
     runs-on: ubuntu-latest
     steps:
-      - name: Create log file
+      - name: Capture Job Logs
         run: |
           mkdir -p logs
-          echo "Fetching logs from aicicd job..." > logs/aicicd_output.log
-          echo "======== Workflow Output ========" >> logs/aicicd_output.log
-          echo "Job status: ${{ needs.aicicd.result }}" >> logs/aicicd_output.log
-          echo "======== System Logs ========" >> logs/aicicd_output.log
-          journalctl --no-pager --since "5 minutes ago" | grep -i terraform >> logs/aicicd_output.log || echo "No relevant logs found" >> logs/aicicd_output.log
-
+          
+          # Capture the job status
+          echo "======== Job Status ========" > logs/aicicd_output.log
+          echo "Job Status: ${{ needs.aicicd.result }}" >> logs/aicicd_output.log
+          
+          # Capture GitHub Actions logs
+          echo "======== Workflow Logs ========" >> logs/aicicd_output.log
+          cat /home/runner/work/_temp/_github_workflow/* >> logs/aicicd_output.log 2>/dev/null || echo "No logs found" >> logs/aicicd_output.log
+          
+          # Capture Terraform-related logs (if available)
+          echo "======== Terraform Logs ========" >> logs/aicicd_output.log
+          journalctl --no-pager --since "10 minutes ago" | grep -i terraform >> logs/aicicd_output.log || echo "No Terraform logs found" >> logs/aicicd_output.log
+          
       - name: Upload Logs
         uses: actions/upload-artifact@v4
         with:
