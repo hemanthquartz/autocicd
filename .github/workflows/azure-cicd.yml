@@ -41,11 +41,23 @@ jobs:
 
           echo "Workflow Run ID: $RUN_ID" > logs/aicicd_runtime.log
 
-          # Download logs using GitHub API
-          curl -s -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -o logs/aicicd_logs.zip \
-            "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/logs"
+          # Validate that RUN_ID is fetched
+          if [[ -z "$RUN_ID" || "$RUN_ID" == "null" ]]; then
+            echo "Failed to retrieve workflow run ID" | tee logs/error.log
+            exit 1
+          fi
+
+          # Download logs from GitHub API
+          LOGS_URL="https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/logs"
+          
+          curl -s -L -H "Authorization: token $GH_TOKEN" \
+            -o logs/aicicd_logs.zip "$LOGS_URL"
+
+          # Validate that logs are downloaded
+          if [[ ! -s logs/aicicd_logs.zip ]]; then
+            echo "Failed to download logs from $LOGS_URL" | tee logs/error.log
+            exit 1
+          fi
 
       - name: Upload Logs
         uses: actions/upload-artifact@v4
