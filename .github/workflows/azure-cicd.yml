@@ -33,17 +33,21 @@ jobs:
         run: |
           mkdir -p logs
           echo "Fetching logs for aicicd job..."
+          
+          # Get the latest successful workflow run ID
+          API_RESPONSE=$(curl -s -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs?status=completed&per_page=5")
 
-          # Get the latest workflow run ID
-          RUN_ID=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/runs?status=completed&per_page=1" \
-            | jq -r '.workflow_runs[0].id')
+          echo "API Response for Workflow Runs:" | tee logs/api_response.json
+          echo "$API_RESPONSE" | tee -a logs/api_response.json
+
+          RUN_ID=$(echo "$API_RESPONSE" | jq -r '.workflow_runs[] | select(.name=="aicicd-poc") | .id' | head -n 1)
 
           echo "Workflow Run ID: $RUN_ID" | tee logs/workflow_run_id.txt
 
           # Validate that RUN_ID is fetched
           if [[ -z "$RUN_ID" || "$RUN_ID" == "null" ]]; then
-            echo "Failed to retrieve workflow run ID" | tee logs/error.log
+            echo "❌ ERROR: Failed to retrieve workflow run ID" | tee logs/error.log
             exit 1
           fi
 
@@ -58,9 +62,9 @@ jobs:
 
           # Validate if the downloaded file is a valid ZIP archive
           if file logs/aicicd_logs.zip | grep -q "Zip archive data"; then
-            echo "Log file is a valid ZIP archive."
+            echo "✅ Log file is a valid ZIP archive."
           else
-            echo "Error: Invalid log file downloaded. Check API response." | tee logs/error.log
+            echo "❌ ERROR: Invalid log file downloaded. Check API response." | tee logs/error.log
             mv logs/aicicd_logs.zip logs/aicicd_logs_invalid_response.html
             exit 1
           fi
@@ -70,3 +74,4 @@ jobs:
         with:
           name: aicicd-runtime-logs
           path: logs/
+
