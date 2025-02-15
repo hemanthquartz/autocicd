@@ -79,4 +79,4 @@ jobs:
         working-directory: terraform
 
       - name: Print output
-        run: echo "Reusable workflow output: ${{ needs.plan.outputs.result }}"
+        run: echo "Reusable workflow output ${{ needs.plan.outputs.result }}"
