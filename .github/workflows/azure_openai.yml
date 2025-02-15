@@ -86,7 +86,7 @@ jobs:
           GH_TOKEN: ${{ secrets.PDE_GHEC_PAT_SECRET }}
 
       - name: Upload Logs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: aicicd-output
           path: output.log
