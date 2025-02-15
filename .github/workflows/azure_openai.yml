@@ -81,7 +81,21 @@ jobs:
       - name: Capture Output of Uses
         run: |
           echo "Capturing the output of aicicd job..."
-          gh run view --log > output.log
+          mkdir -p logs
+          
+          # Get the current workflow run ID
+          RUN_ID=${{ github.run_id }}
+
+          # Get the job ID for 'aicicd-poc'
+          JOB_ID=$(gh run view $RUN_ID --json jobs | jq -r '.jobs[] | select(.name=="aicicd-poc") | .id')
+
+          if [[ -z "$JOB_ID" ]]; then
+            echo "Error: Could not find the job ID for 'aicicd-poc'"
+            exit 1
+          fi
+
+          # Fetch logs for the specific job and save them
+          gh run view $RUN_ID --job $JOB_ID --log > logs/aicicd-output.log 2>&1
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Upload Logs
