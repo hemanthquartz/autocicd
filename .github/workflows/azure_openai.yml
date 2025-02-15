@@ -83,8 +83,7 @@ jobs:
           echo "Capturing the output of aicicd job..."
           gh run view --log > output.log
         env:
-          GH_TOKEN: ${{ secrets.PDE_GHEC_PAT_SECRET }}
-
+          GH_TOKEN: ${{ github.token }}
       - name: Upload Logs
         uses: actions/upload-artifact@v4
         with:
