@@ -78,7 +78,27 @@ jobs:
           -var "tenant_id=${{ secrets.AZURE_TENANT_ID }}"
         working-directory: terraform
 
-      - name: Capture Output of Uses
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install jq (for JSON parsing)
+        run: sudo apt-get install -y jq
+
+      - name: List All Runs
+        run: |
+          echo "Listing recent workflow runs..."
+          gh run list --limit 5
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List All Jobs in the Run
+        run: |
+          echo "Fetching details for workflow run ID: ${{ github.run_id }}"
+          gh run view ${{ github.run_id }} --json jobs | jq '.jobs[] | {id, name}'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Capture Logs
         run: |
           echo "Capturing the output of aicicd job..."
           mkdir -p logs
@@ -86,20 +106,25 @@ jobs:
           # Get the current workflow run ID
           RUN_ID=${{ github.run_id }}
 
+          # List all job names for debugging
+          echo "Available jobs in this run:"
+          gh run view $RUN_ID --json jobs | jq '.jobs[] | {id, name}'
+
           # Get the job ID for 'aicicd-poc'
           JOB_ID=$(gh run view $RUN_ID --json jobs | jq -r '.jobs[] | select(.name=="aicicd-poc") | .id')
 
-          if [[ -z "$JOB_ID" ]]; then
-            echo "Error: Could not find the job ID for 'aicicd-poc'"
+          if [[ -z "$JOB_ID" || "$JOB_ID" == "null" ]]; then
+            echo "Error: Could not find the job ID for 'aicicd-poc'."
             exit 1
           fi
 
           # Fetch logs for the specific job and save them
           gh run view $RUN_ID --job $JOB_ID --log > logs/aicicd-output.log 2>&1
         env:
-          GH_TOKEN: ${{ github.token }}
-      - name: Upload Logs
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Logs as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: aicicd-output
-          path: output.log
+          name: aicicd-logs
+          path: logs/aicicd-output.log
