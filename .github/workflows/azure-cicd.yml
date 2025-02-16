@@ -59,23 +59,25 @@ jobs:
     name: Capture aicicd Job ID on Failure
     runs-on: ubuntu-latest
     needs: [terraform_plan, terraform_apply, terraform_destroy]
-    if: failure() # Runs only if aicicd fails
+    if: always() # Runs only if aicicd fails
     steps:
       - name: Get Workflow Run Jobs
         run: |
-          JOBS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs --jq '.jobs[] | select(.name=="aicicd-poc") | .id')
-          echo "AICICD_JOB_ID=$JOBS" >> $GITHUB_ENV
-          echo "Captured Job ID: $JOBS"
+          JOBS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs --jq '.jobs[] | .id')
+          echo "JOB_IDS=$JOBS" >> $GITHUB_ENV
+          echo "Captured Job IDs: $JOBS"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use PAT with workflow permissions
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Debug Job ID
         run: |
-          echo "Job ID retrieved: $AICICD_JOB_ID"
+          echo "Job IDs retrieved: $JOB_IDS"
 
-      - name: Fetch aicicd Logs
+      - name: Fetch Logs for All Jobs
         run: |
-          echo "Fetching logs for Job ID: $AICICD_JOB_ID"
-          gh api repos/${{ github.repository }}/actions/jobs/$AICICD_JOB_ID/logs
+          for JOB_ID in $JOB_IDS; do
+            echo "Fetching logs for Job ID: $JOB_ID"
+            gh api repos/${{ github.repository }}/actions/jobs/$JOB_ID/logs
+          done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
