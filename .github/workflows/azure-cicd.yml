@@ -21,7 +21,6 @@ permissions:
 jobs:
   terraform_plan:
     name: Terraform Plan
-    id: plan
     uses: ./.github/workflows/terraform-reusable.yml
     with:
       action: plan
@@ -34,7 +33,6 @@ jobs:
 
   terraform_apply:
     name: Terraform Apply
-    id: apply
     uses: ./.github/workflows/terraform-reusable.yml
     with:
       action: apply
@@ -47,7 +45,6 @@ jobs:
 
   terraform_destroy:
     name: Terraform Destroy
-    id: destroy
     uses: ./.github/workflows/terraform-reusable.yml
     with:
       action: destroy
