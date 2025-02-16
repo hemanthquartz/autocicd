@@ -1,0 +1,75 @@
+name: Terraform Reusable Workflow
+
+on:
+  workflow_call:
+    inputs:
+      action:
+        required: true
+        type: string
+      working-directory:
+        required: false
+        type: string
+        default: terraform
+    secrets:
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+
+jobs:
+  terraform_execution:
+    name: Terraform ${{ inputs.action }}
+    runs-on: ubuntu-latest
+    env:
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_USE_OIDC: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.4.0'
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Initialize Terraform
+        run: terraform init
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Run Terraform Plan
+        if: inputs.action == 'plan'
+        run: |
+          terraform plan -out=tfplan -lock=false -input=false \
+          -var "subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          -var "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+          -var "tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Run Terraform Apply
+        if: inputs.action == 'apply'
+        run: |
+          terraform apply -auto-approve -input=false \
+          -var "subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          -var "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+          -var "tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Run Terraform Destroy
+        if: inputs.action == 'destroy'
+        run: |
+          terraform destroy -auto-approve -input=false \
+          -var "subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          -var "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+          -var "tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+        working-directory: ${{ inputs.working-directory }}
