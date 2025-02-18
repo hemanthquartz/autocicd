@@ -55,68 +55,76 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
     if: github.event.inputs.action == 'destroy'
 
-  capture_job_errors:
-    name: Capture Job Errors and Fetch Logs
-    runs-on: ubuntu-latest
-    needs: [terraform_plan, terraform_apply, terraform_destroy]  # Runs after all jobs
-    if: always()  # Ensures execution even if previous jobs fail
-    steps:
-      - name: Get Workflow Run Jobs (Failed Only)
-        run: |
-          FAILED_JOBS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs --jq '.jobs[] | select(.conclusion=="failure") | "\(.id) \(.name)"')
-          
-          echo "FAILED_JOBS<<EOF" >> $GITHUB_ENV
-          echo "$FAILED_JOBS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-          echo "Captured Failed Job Details:"
-          echo "$FAILED_JOBS"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Debug Failed Job Details
-        run: |
-          echo "Failed Jobs Retrieved:"
-          echo "$FAILED_JOBS"
-
-      - name: Fetch and Extract Errors from Logs
-        run: |
-          echo "Extracting errors from failed job logs..." > errors.log
-          
-          while IFS= read -r line; do
-            JOB_ID=$(echo $line | awk '{print $1}')
-            JOB_NAME=$(echo $line | awk '{print substr($0, index($0,$2))}')
-            
-            echo "Fetching logs for Job ID: $JOB_ID, Job Name: $JOB_NAME"
-            
-            gh api repos/${{ github.repository }}/actions/jobs/${JOB_ID}/logs > job_${JOB_ID}.log
-            
-            # Extract only error messages from the log file
-            grep -i "error" job_${JOB_ID}.log >> errors.log || echo "No errors found for $JOB_NAME"
-
-          done <<< "$FAILED_JOBS"
-
-          echo "Extracted Errors:"
-          cat errors.log
-          
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Auto-Heal Deployment (if Terraform failed)
-        if: always()
-        env:
-          AZURE_OPENAI_RESOURCE_NAME: ${{ secrets.AZURE_OPENAI_RESOURCE_NAME }}
-          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
-          AZURE_OPENAI_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME }}
-          AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
-          REPO_NAME_SECRET: ${{ secrets.REPO_NAME_SECRET }}
-        run: |
-          echo "Checking directory contents before running autoheal:"
-          pwd
-          ls -la
-          ls -l $GITHUB_WORKSPACE/terraform
-          echo "Checking GitHub Secrets for OpenAI Resource Name:"
-          echo "AZURE_OPENAI_RESOURCE_NAME=${{ secrets.AZURE_OPENAI_RESOURCE_NAME }}"
-          python3 scripts/autoheal.py
+    capture_job_errors:
+      name: Capture Job Errors and Fetch Logs
+      runs-on: ubuntu-latest
+      needs: [terraform_plan, terraform_apply, terraform_destroy]  # Runs after all jobs
+      if: always()  # Ensures execution even if previous jobs fail
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v3
   
+        - name: Get Workflow Run Jobs (Failed Only)
+          run: |
+            FAILED_JOBS=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs --jq '.jobs[] | select(.conclusion=="failure") | "\(.id) \(.name)"')
+            
+            echo "FAILED_JOBS<<EOF" >> $GITHUB_ENV
+            echo "$FAILED_JOBS" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+  
+            echo "Captured Failed Job Details:"
+            echo "$FAILED_JOBS"
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+        - name: Debug Failed Job Details
+          run: |
+            echo "Failed Jobs Retrieved:"
+            echo "$FAILED_JOBS"
+  
+        - name: Fetch and Extract Errors from Logs
+          run: |
+            echo "Extracting errors from failed job logs..." > errors.log
+            
+            while IFS= read -r line; do
+              JOB_ID=$(echo $line | awk '{print $1}')
+              JOB_NAME=$(echo $line | awk '{print substr($0, index($0,$2))}')
+              
+              echo "Fetching logs for Job ID: $JOB_ID, Job Name: $JOB_NAME"
+              
+              gh api repos/${{ github.repository }}/actions/jobs/${JOB_ID}/logs > job_${JOB_ID}.log
+              
+              # Extract only error messages from the log file
+              grep -i "error" job_${JOB_ID}.log >> errors.log || echo "No errors found for $JOB_NAME"
+  
+            done <<< "$FAILED_JOBS"
+  
+            echo "Extracted Errors:"
+            cat errors.log
+            
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+        - name: Ensure Terraform Directory Exists
+          run: |
+            if [ ! -d "$GITHUB_WORKSPACE/terraform" ]; then
+              echo "Terraform directory missing! Creating it..."
+              mkdir -p "$GITHUB_WORKSPACE/terraform"
+            fi
+            ls -la "$GITHUB_WORKSPACE/terraform"
+  
+        - name: Auto-Heal Deployment (if Terraform failed)
+          if: always()
+          env:
+            AZURE_OPENAI_RESOURCE_NAME: ${{ secrets.AZURE_OPENAI_RESOURCE_NAME }}
+            AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+            AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+            AZURE_OPENAI_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME }}
+            AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+            REPO_NAME_SECRET: ${{ secrets.REPO_NAME_SECRET }}
+          run: |
+            echo "Checking directory contents before running autoheal:"
+            pwd
+            ls -la
+            ls -l $GITHUB_WORKSPACE/terraform
+            python3 scripts/autoheal.py  
