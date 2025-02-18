@@ -114,7 +114,7 @@ jobs:
         run: |
           echo "Checking directory contents before running autoheal:"
           pwd
-          la -la
+          ls -la
           ls -l $GITHUB_WORKSPACE/terraform
           echo "Checking GitHub Secrets for OpenAI Resource Name:"
           echo "AZURE_OPENAI_RESOURCE_NAME=${{ secrets.AZURE_OPENAI_RESOURCE_NAME }}"
