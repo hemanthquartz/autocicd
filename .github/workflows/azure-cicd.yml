@@ -112,15 +112,11 @@ jobs:
           AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
           REPO_NAME_SECRET: ${{ secrets.REPO_NAME_SECRET }}
         run: |
-          if [[ "$DEPLOYMENT_FAILED" == "true" ]]; then
-            echo "Deployment failed. Running autoheal script..."
-            echo "Checking directory contents before running autoheal:"
-            pwd
-            la -la
-            ls -l $GITHUB_WORKSPACE/terraform
-            echo "Checking GitHub Secrets for OpenAI Resource Name:"
-            echo "AZURE_OPENAI_RESOURCE_NAME=${{ secrets.AZURE_OPENAI_RESOURCE_NAME }}"
-            python3 scripts/autoheal.py
-          else
-            echo "Deployment succeeded. Skipping autoheal."
-          fi
+          echo "Checking directory contents before running autoheal:"
+          pwd
+          la -la
+          ls -l $GITHUB_WORKSPACE/terraform
+          echo "Checking GitHub Secrets for OpenAI Resource Name:"
+          echo "AZURE_OPENAI_RESOURCE_NAME=${{ secrets.AZURE_OPENAI_RESOURCE_NAME }}"
+          python3 scripts/autoheal.py
+  
