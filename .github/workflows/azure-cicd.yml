@@ -98,7 +98,7 @@ jobs:
 
       - name: Fetch and Extract Errors from Logs
         run: |
-          echo "Extracting errors from failed job logs..." > errors.log
+          echo "Extracting errors from failed job logs..." > tf_error_log.txt
           
           while IFS= read -r line; do
             JOB_ID=$(echo $line | awk '{print $1}')
@@ -109,12 +109,12 @@ jobs:
             gh api repos/${{ github.repository }}/actions/jobs/${JOB_ID}/logs > job_${JOB_ID}.log
             
             # Extract only error messages from the log file
-            grep -i "error" job_${JOB_ID}.log >> errors.log || echo "No errors found for $JOB_NAME"
+            grep -i "error" job_${JOB_ID}.log >> tf_error_log.txt || echo "No errors found for $JOB_NAME"
 
           done <<< "$FAILED_JOBS"
 
           echo "Extracted Errors:"
-          cat errors.log
+          cat tf_error_log.txt
           
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
