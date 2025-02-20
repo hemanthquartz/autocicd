@@ -9,7 +9,7 @@ provider "azurerm" {
 
 resource "azurerm_cognitive_account" "openai_account" {
   name                = "openaiaccount${random_id.unique.hex}"
-  location            = "East US"
+  location            = "East US2"
   resource_group_name = "openai_rg"
   kind                = "OpenAI"
   sku_name            = "S0"
